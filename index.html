@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTBB Safeguarding Training</title>
+  <meta name="description" content="HTBB Church Safeguarding Training Course — learn how to recognise, respond to, and prevent abuse in church ministry.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Loading Screen -->
+  <div id="loading" class="loading-screen">
+    <div class="loading-spinner"></div>
+    <p class="loading-text">Loading course...</p>
+  </div>
+
+  <!-- App Container -->
+  <div id="app" class="app-layout" style="display:none;">
+
+    <!-- Mobile Overlay -->
+    <div id="mobileOverlay" class="mobile-overlay"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div>
+          <div class="sidebar-title">HTBB Safeguarding</div>
+          <div class="sidebar-subtitle">Training Course</div>
+        </div>
+        <button id="sidebarClose" class="sidebar-close" aria-label="Close menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="sidebar-progress">
+        <div class="sidebar-progress-label">
+          <span>Course Progress</span>
+          <span id="sidebarProgressText">0 / 0 quizzes</span>
+        </div>
+        <div class="sidebar-progress-bar">
+          <div id="sidebarProgressFill" class="sidebar-progress-fill" style="width:0%"></div>
+        </div>
+      </div>
+      <nav id="sidebarNav" class="sidebar-nav"></nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Top Header -->
+      <header class="top-header">
+        <button id="mobileMenuBtn" class="mobile-menu-btn" aria-label="Open menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="header-progress">
+          <div class="header-progress-label">
+            <span>Course Progress</span>
+            <span id="headerProgressText">0%</span>
+          </div>
+          <div class="header-progress-bar">
+            <div id="headerProgressFill" class="header-progress-fill" style="width:0%"></div>
+          </div>
+        </div>
+        <div class="header-stats">
+          <div class="header-stat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+            <span id="headerQuizCount">0/0 quizzes</span>
+          </div>
+          <div class="header-stat">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>~45 min videos</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Content Area -->
+      <div id="contentArea" class="content-area"></div>
+
+      <!-- Bottom Navigation -->
+      <footer class="bottom-nav">
+        <button id="prevBtn" class="btn btn-outline btn-sm" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="15 18 9 12 15 6"/></svg>
+          <span>Previous</span>
+        </button>
+        <span id="navInfo" class="bottom-nav-info">1 / 1</span>
+        <button id="nextBtn" class="btn btn-primary btn-sm">
+          <span>Next</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </footer>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
