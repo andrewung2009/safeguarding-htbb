@@ -905,14 +905,9 @@
     var embedUrl = block.youtubeUrl ? getYoutubeEmbedUrl(block.youtubeUrl) : null;
     var html = '<div class="video-block">';
     if (embedUrl) {
-      html += '<div class="video-wrapper"><iframe src="' + escHtml(embedUrl) + '" title="' + escHtml(block.title || 'Course Video') + '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>';
-    } else {
-      html += '<div class="video-placeholder"><button class="video-play-btn">' + ICONS['play'] + '</button></div>';
+      html += '<iframe width="963" height="542" src="' + escHtml(embedUrl) + '" title="' + escHtml(block.title || 'Course Video') + '" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>';
     }
-    html += '<div class="video-info">';
-    if (block.title) html += '<span class="video-info-title">' + escHtml(block.title) + '</span>';
-    html += '<span class="video-info-duration">' + ICONS['clock'] + ' ' + escHtml(block.duration) + '</span>';
-    html += '</div></div>';
+    html += '</div>';
     return html;
   }
 
@@ -933,7 +928,10 @@
     if (submitted) {
       html += '<span class="quiz-result ' + (isCorrect ? 'correct' : 'incorrect') + '">';
       html += isCorrect ? ICONS['check-circle'] : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
-      html += ' <span class="quiz-result-text">' + (isCorrect ? 'Correct' : 'Incorrect') + '</span></span>';
+      html += ' <span class="quiz-result-text">' + (isCorrect ? 'Correct!' : 'Incorrect') + '</span></span>';
+      if (isCorrect) {
+        html += '<span class="quiz-success-feedback">' + ICONS['check-circle'] + ' Well done!</span>';
+      }
     }
     html += '</div>';
     html += '<div class="quiz-question">' + escHtml(block.question) + '</div>';
@@ -978,7 +976,7 @@
     html += '<div class="quiz-actions">';
     if (!submitted) {
       html += '<button class="btn btn-primary btn-sm quiz-submit-btn" data-quiz-id="' + block.id + '">Submit Answer</button>';
-    } else {
+    } else if (!isCorrect) {
       html += '<button class="btn btn-outline btn-sm quiz-reset-btn" data-quiz-id="' + block.id + '">' + ICONS['refresh'] + ' Try Again</button>';
     }
     html += '</div>';
@@ -1224,7 +1222,120 @@
     return html;
   }
 
+  // ==================== Confetti ====================
+  function launchConfetti(originEl) {
+    var container = document.createElement('div');
+    container.className = 'confetti-container';
+    document.body.appendChild(container);
+
+    var rect = originEl ? originEl.getBoundingClientRect() : { left: window.innerWidth / 2, top: window.innerHeight / 3, width: 0 };
+    var cx = rect.left + rect.width / 2;
+    var cy = rect.top;
+
+    var colors = ['#14b8a6', '#10b981', '#0d9488', '#059669', '#2dd4bf', '#99f6e4', '#06b6d4', '#67e8f9'];
+    var pieces = 16;
+
+    for (var i = 0; i < pieces; i++) {
+      var piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      var color = colors[Math.floor(Math.random() * colors.length)];
+      var x = cx + (Math.random() - 0.5) * 160;
+      var y = cy + (Math.random() - 0.5) * 20;
+      var size = 5 + Math.random() * 6;
+      var duration = 1 + Math.random() * 0.8;
+      var delay = Math.random() * 0.3;
+      var rotation = Math.random() * 720;
+
+      piece.style.cssText = 'left:' + x + 'px;top:' + y + 'px;width:' + size + 'px;height:' + size + 'px;' +
+        'background:' + color + ';animation-duration:' + duration + 's;animation-delay:' + delay + 's;' +
+        'transform:rotate(' + rotation + 'deg);border-radius:' + (Math.random() > 0.5 ? '50%' : '2px') + ';';
+      container.appendChild(piece);
+    }
+
+    setTimeout(function () {
+      if (container.parentNode) container.parentNode.removeChild(container);
+    }, 2500);
+  }
+
   // ==================== Event Listeners ====================
+  // Update a single quiz card in-place without re-rendering the entire page
+  function updateQuizCard(quizId) {
+    var quizData = null;
+    COURSE_DATA.modules.forEach(function (mod) {
+      mod.lessons.forEach(function (lesson) {
+        lesson.blocks.forEach(function (b) {
+          if (b.type === 'quiz' && b.id === quizId) quizData = b;
+        });
+      });
+    });
+    if (!quizData) return;
+
+    var existingCard = document.querySelector('.quiz-card[data-quiz-id="' + quizId + '"]');
+    if (!existingCard) return;
+
+    // Update card ENTIRELY in-place — same DOM node, no removal, no flash.
+    // We parse the new HTML, then copy class + innerHTML onto the existing element.
+    var newHtml = renderQuiz(quizData);
+    var temp = document.createElement('div');
+    temp.innerHTML = newHtml;
+    var parsed = temp.firstElementChild;
+    existingCard.className = parsed.className;
+    existingCard.innerHTML = parsed.innerHTML;
+
+    // The existing card is still the same DOM node — no query needed
+    var updatedCard = existingCard;
+
+    // Re-attach listeners for just this quiz
+    var submitBtn = updatedCard.querySelector('.quiz-submit-btn');
+    if (submitBtn) {
+      submitBtn.addEventListener('click', function () {
+        var answer = state.quizAnswers[quizId];
+        if (!answer || answer.selected.length === 0) return;
+        var correct = arrEq(answer.selected, quizData.correctAnswers);
+        answer.isCorrect = correct;
+        answer.submitted = true;
+        saveState();
+        if (correct) launchConfetti(updatedCard);
+        updateQuizCard(quizId);
+        renderSidebar();
+        updateProgress();
+      });
+    }
+
+    var resetBtn = updatedCard.querySelector('.quiz-reset-btn');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function () {
+        state.quizAnswers[quizId] = { selected: [], isCorrect: false, submitted: false };
+        saveState();
+        updateQuizCard(quizId);
+        renderSidebar();
+        updateProgress();
+      });
+    }
+
+    // Re-attach option change listeners for this quiz
+    var isMulti = quizData.selectMode === 'multi';
+    updatedCard.querySelectorAll('.quiz-option input').forEach(function (input) {
+      input.addEventListener('change', function () {
+        var answer = state.quizAnswers[quizId];
+        if (!answer) {
+          answer = { selected: [], isCorrect: false, submitted: false };
+          state.quizAnswers[quizId] = answer;
+        }
+        if (isMulti) {
+          if (this.checked) {
+            if (answer.selected.indexOf(this.value) === -1) answer.selected.push(this.value);
+          } else {
+            answer.selected = answer.selected.filter(function (v) { return v !== this.value; });
+          }
+        } else {
+          answer.selected = [this.value];
+        }
+        saveState();
+      });
+    });
+  }
+
   function attachQuizListeners() {
     document.querySelectorAll('.quiz-option input').forEach(function (input) {
       input.addEventListener('change', function () {
@@ -1266,7 +1377,13 @@
         answer.isCorrect = correct;
         answer.submitted = true;
         saveState();
-        renderContent();
+
+        if (correct) {
+          launchConfetti(this.closest('.quiz-card'));
+        }
+
+        // Update only this quiz card in-place instead of re-rendering everything
+        updateQuizCard(quizId);
         renderSidebar();
         updateProgress();
       });
@@ -1277,7 +1394,7 @@
         var quizId = this.getAttribute('data-quiz-id');
         state.quizAnswers[quizId] = { selected: [], isCorrect: false, submitted: false };
         saveState();
-        renderContent();
+        updateQuizCard(quizId);
         renderSidebar();
         updateProgress();
       });
@@ -1426,28 +1543,33 @@
     document.getElementById('prevBtn').addEventListener('click', function () {
       var idx = findCurrentIndex();
       if (idx > 0) {
-        state.currentLessonId = allLessons[idx - 1].lesson.id;
-        saveState();
-        renderSidebar();
-        renderContent();
-        updateProgress();
-        updateNav();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        navigateToLesson(idx - 1);
       }
     });
 
     document.getElementById('nextBtn').addEventListener('click', function () {
       var idx = findCurrentIndex();
       if (idx < allLessons.length - 1) {
-        state.currentLessonId = allLessons[idx + 1].lesson.id;
+        navigateToLesson(idx + 1);
+      }
+    });
+
+    function navigateToLesson(targetIdx) {
+      var contentArea = document.getElementById('contentArea');
+      contentArea.classList.add('content-transitioning');
+      setTimeout(function () {
+        state.currentLessonId = allLessons[targetIdx].lesson.id;
         saveState();
         renderSidebar();
         renderContent();
         updateProgress();
         updateNav();
         window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    });
+        setTimeout(function () {
+          contentArea.classList.remove('content-transitioning');
+        }, 30);
+      }, 200);
+    }
   }
 
   // Wait for DOM
