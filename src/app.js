@@ -102,7 +102,7 @@ function renderHub() {
   var html = '';
   html += '<div class="hub-view">';
   html += '<div class="hub-hero">';
-  html += '<div class="hub-hero-logo"><img src="/htbb-logo.png" alt="HTBB"></div>';
+  html += '<div class="hub-hero-logo"><img src="./htbb-logo.png" alt="HTBB"></div>';
   html += '<h1 class="hub-hero-title">Safeguarding Training</h1>';
   html += '<p class="hub-hero-subtitle">Complete all modules to finish the course</p>';
   html += '<div class="hub-hero-stats">';
