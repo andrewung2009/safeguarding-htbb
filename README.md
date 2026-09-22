@@ -16,7 +16,7 @@
 
 ## About
 
-A single-page application built for HTBB (Holy Trinity Brompton) to deliver mandatory safeguarding training to church staff and volunteers. The course walks learners through 7 modules of progressively deeper content — from foundational principles to practical scenarios and self-declaration.
+A single-page application built for HTBB (Holy Trinity Bukit Bintang) to deliver mandatory safeguarding training to church staff and volunteers. The course walks learners through 7 modules of progressively deeper content — from foundational principles to practical scenarios and self-declaration.
 
 **Key features:**
 
@@ -190,4 +190,4 @@ GitHub Pages is configured to serve from the `gh-pages` branch.
 
 ## License
 
-This project is private to HTBB (Holy Trinity Brompton).
+This project is private to HTBB (Holy Trinity Bukit Bintang).
