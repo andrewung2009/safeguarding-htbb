@@ -22,8 +22,12 @@ A single-page application built for HTBB (Holy Trinity Bukit Bintang) to deliver
 
 - Progressive block-by-block lesson flow (videos, quizzes, reflections, scenarios)
 - Real-time progress tracking with localStorage persistence
-- Module hub with animated progress rings
+- Module hub with animated progress rings and numbered module cards
 - 20 interactive quizzes with instant feedback
+- Scenario reference panel — collapsible scenario text shown during quizzes
+- Dark/light mode toggle (respects system preference, persists choice)
+- Resume course button — pick up where you left off from the hub
+- PWA offline support — installable, works after first visit
 - Responsive design — works on desktop, tablet, and mobile
 - Zero dependencies beyond Vite (no React, no frameworks)
 
@@ -85,7 +89,9 @@ npm run preview    # preview the production build locally
 │   ├── utils.js                # Helpers: escHtml, arrEq, getYoutubeEmbedUrl
 │   └── style.css               # Full stylesheet with CSS custom properties
 ├── public/
-│   └── htbb-logo.png           # Logo asset (served at root)
+│   ├── htbb-logo.png           # Logo asset (served at root)
+│   ├── manifest.json           # PWA manifest
+│   └── sw.js                   # Service worker for offline support
 ├── .github/
 │   └── workflows/
 │       └── deploy.yml          # GitHub Actions — builds and deploys to GitHub Pages
@@ -98,9 +104,11 @@ npm run preview    # preview the production build locally
 
 The app has two views:
 
-**Hub View** — A module card grid where each card shows the module title, current lesson name, and an animated SVG progress ring. Clicking a card enters the first lesson of that module.
+**Hub View** — A module card grid where each card shows a numbered module badge (01–07), the module title, current lesson name, and an animated SVG progress ring. A "Resume course" button appears when there's a partially completed lesson. Clicking a card enters the first incomplete lesson of that module.
 
 **Lesson View** — A progressive block-by-block flow. Each lesson is broken into blocks (video, text, quiz, discussion, scenario, etc.) that are shown one at a time. The user clicks "Next Step" to advance. Quizzes and discussions must be completed before advancing.
+
+**Scenario Reference** — During scenario-based quizzes (e.g., Jasmine, Daniel, Brandon), a collapsible scenario panel appears above the quiz question. Users can expand it to reference the scenario text while answering, then collapse it to reduce scrolling.
 
 ```
 Hub View                     Lesson View
@@ -126,6 +134,8 @@ Hub View                     Lesson View
   declarationChecks: { [key]: bool }
 }
 ```
+
+**Theme** is stored in a separate `localStorage` key (`htbb-theme`) as `"dark"` or `"light"`. Falls back to system `prefers-color-scheme` on first visit.
 
 **Module dependency flow:**
 
@@ -176,6 +186,7 @@ In `src/course-data.js`, add a lesson object to the appropriate module:
 - **Vite** — dev server, build tooling, module bundling
 - **GitHub Actions** — CI/CD pipeline for GitHub Pages deployment
 - **localStorage** — client-side progress persistence
+- **Service Worker** — offline caching and PWA support
 
 ## Deployment
 
