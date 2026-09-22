@@ -121,14 +121,16 @@ function renderHub() {
   html += '</div>';
 
   html += '<div class="hub-modules">';
-  COURSE_DATA.modules.forEach(function (mod) {
+  COURSE_DATA.modules.forEach(function (mod, modIdx) {
     var modPct = getModuleProgress(mod);
     var allComplete = mod.lessons.every(function (l) { return isLessonComplete(l); });
     var lessonsComplete = mod.lessons.filter(function (l) { return isLessonComplete(l); }).length;
+    var gradIdx = (modIdx % 7) + 1;
 
-    html += '<button class="hub-module-card' + (allComplete ? ' complete' : '') + '" data-module="' + mod.id + '">';
+    html += '<button class="hub-module-card' + (allComplete ? ' complete' : '') + '" data-module="' + mod.id + '" style="animation:cardSlideIn 0.5s var(--ease-out) ' + (modIdx * 0.08) + 's both">';
+    html += '<span class="hub-module-number">' + String(modIdx + 1).padStart(2, '0') + '</span>';
     html += '<div class="hub-module-header">';
-    html += '<div class="hub-module-icon">' + (ICONS[mod.icon] || ICONS['book-open']) + '</div>';
+    html += '<div class="hub-module-icon gradient-' + gradIdx + '">' + (ICONS[mod.icon] || ICONS['book-open']) + '</div>';
     if (allComplete) html += '<div class="hub-module-check">' + ICONS['check-circle'] + '</div>';
     html += '</div>';
     html += '<h3 class="hub-module-title">' + escHtml(mod.title.replace(/^Module \d+:\s*/, '')) + '</h3>';
@@ -203,19 +205,25 @@ function renderLessonView() {
   html += '<p class="lesson-module-label">' + escHtml(item.moduleTitle) + '</p>';
   html += '<h1 class="lesson-title">' + escHtml(lesson.title) + '</h1>';
   html += '<div class="lesson-step-indicator">';
-  for (var i = 0; i < blocks.length; i++) {
-    var stepClass = 'step-dot';
-    if (i < idx) stepClass += ' completed';
-    else if (i === idx) stepClass += ' active';
-    html += '<div class="' + stepClass + '"></div>';
-  }
-  html += '<span class="step-label">Step ' + (idx + 1) + ' of ' + blocks.length + '</span>';
+  var pctProgress = blocks.length > 1 ? Math.round((idx / (blocks.length - 1)) * 100) : 100;
+  html += '<div class="lesson-progress-track"><div class="lesson-progress-fill" style="width:' + pctProgress + '%"></div></div>';
+  html += '<span class="step-label">' + (idx + 1) + ' / ' + blocks.length + '</span>';
   html += '</div>';
   html += '</div>';
 
+  var blockTypeLabels = { video:'Video', quiz:'Quiz', discussion:'Reflection', scenario:'Scenario', text:'Reading', principles:'Key Principles', officers:'Safeguarding Officers', links:'Resources', warning:'Important Notice', 'safer-recruitment':'Safer Recruitment', declaration:'Self-Declaration', closing:'Summary' };
+  var blockTypeIcons = { video:'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z', quiz:'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', discussion:'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z', scenario:'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z', text:'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' };
+  var currentBlock = blocks[idx];
+  var typeLabel = blockTypeLabels[currentBlock.type] || currentBlock.type;
+  var typeSvg = blockTypeIcons[currentBlock.type] || '';
+
   html += '<div class="lesson-blocks-progressive">';
+  html += '<div class="block-type-pill type-' + currentBlock.type + '">';
+  if (typeSvg) html += '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="' + typeSvg + '"/></svg>';
+  html += typeLabel;
+  html += '</div>';
   html += '<div class="block-container block-enter">';
-  html += renderBlock(blocks[idx]);
+  html += renderBlock(currentBlock);
   html += '</div>';
 
   if (idx >= blocks.length - 1) {
@@ -274,6 +282,7 @@ function advanceBlock() {
     state.currentBlockIndex++;
     saveState();
     renderLessonView();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 }
 
@@ -310,7 +319,6 @@ function updateHeader() {
   var backBtn = document.getElementById('headerBackBtn');
   var progressWrap = document.getElementById('headerProgressWrap');
   var statsWrap = document.getElementById('headerStatsWrap');
-  var progressLabel = document.getElementById('headerProgressLabel');
 
   if (state.view === 'hub') {
     backBtn.style.display = 'none';
@@ -318,21 +326,8 @@ function updateHeader() {
     statsWrap.style.display = 'flex';
   } else {
     backBtn.style.display = 'flex';
-    progressWrap.style.display = 'block';
+    progressWrap.style.display = 'none';
     statsWrap.style.display = 'none';
-
-    var item = getCurrentLesson();
-    if (item) {
-      var blocks = item.lesson.blocks;
-      var completedBlocks = 0;
-      for (var i = 0; i <= state.currentBlockIndex && i < blocks.length; i++) {
-        if (isBlockComplete(blocks[i])) completedBlocks++;
-      }
-      var pct = blocks.length > 0 ? Math.round((completedBlocks / blocks.length) * 100) : 0;
-      progressLabel.textContent = 'Step ' + (state.currentBlockIndex + 1) + ' of ' + blocks.length;
-      document.getElementById('headerProgressText').textContent = pct + '%';
-      document.getElementById('headerProgressFill').style.width = pct + '%';
-    }
   }
 
   var completed = getCompletedQuizzes();
