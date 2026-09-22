@@ -169,12 +169,7 @@ function enterLesson(lessonId) {
   var item = allLessons.find(function (l) { return l.lesson.id === lessonId; });
   if (item) {
     var blocks = item.lesson.blocks;
-    var resumeIdx = 0;
-    for (var i = 0; i < blocks.length; i++) {
-      if (!isBlockComplete(blocks[i])) { resumeIdx = i; break; }
-      if (i === blocks.length - 1) resumeIdx = blocks.length - 1;
-    }
-    state.currentBlockIndex = resumeIdx;
+    state.currentBlockIndex = 0;
   } else {
     state.currentBlockIndex = 0;
   }
