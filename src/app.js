@@ -120,6 +120,22 @@ function renderHub() {
   html += '</div>';
   html += '</div>';
 
+  if (state.currentLessonId && state.currentBlockIndex > 0) {
+    var resumeItem = allLessons.find(function (l) { return l.lesson.id === state.currentLessonId; });
+    if (resumeItem && !isLessonComplete(resumeItem.lesson)) {
+      var rBlocks = resumeItem.lesson.blocks;
+      html += '<div class="hub-resume" id="hubResumeBtn">';
+      html += '<div class="hub-resume-content">';
+      html += '<div class="hub-resume-label">Continue where you left off</div>';
+      html += '<div class="hub-resume-title">' + escHtml(resumeItem.lesson.title) + '</div>';
+      html += '<div class="hub-resume-meta">' + escHtml(resumeItem.moduleTitle) + '</div>';
+      html += '<div class="hub-resume-step">Step ' + (state.currentBlockIndex + 1) + ' of ' + rBlocks.length + '</div>';
+      html += '</div>';
+      html += '<div class="hub-resume-btn">Resume<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="9 18 15 12 9 6"/></svg></div>';
+      html += '</div>';
+    }
+  }
+
   html += '<div class="hub-modules">';
   COURSE_DATA.modules.forEach(function (mod, modIdx) {
     var modPct = getModuleProgress(mod);
@@ -160,6 +176,13 @@ function renderHub() {
       enterLesson(target.id);
     });
   });
+
+  var resumeBtn = document.getElementById('hubResumeBtn');
+  if (resumeBtn) {
+    resumeBtn.addEventListener('click', function () {
+      enterLesson(state.currentLessonId);
+    });
+  }
 }
 
 /* =============================================
@@ -978,5 +1001,19 @@ export function init() {
 
   document.getElementById('nextBtn').addEventListener('click', function () {
     advanceBlock();
+  });
+
+  initTheme();
+}
+
+function initTheme() {
+  var saved = localStorage.getItem('htbb-theme');
+  var isDark = saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+  if (isDark) document.body.classList.add('dark');
+
+  document.getElementById('themeToggle').addEventListener('click', function () {
+    document.body.classList.toggle('dark');
+    var dark = document.body.classList.contains('dark');
+    localStorage.setItem('htbb-theme', dark ? 'dark' : 'light');
   });
 }
