@@ -166,17 +166,15 @@ function renderHub() {
    LESSON VIEW — Progressive Disclosure
    ============================================= */
 function enterLesson(lessonId) {
+  var isResuming = (state.currentLessonId === lessonId);
   state.view = 'lesson';
   state.currentLessonId = lessonId;
-  var item = allLessons.find(function (l) { return l.lesson.id === lessonId; });
-  if (item) {
-    var blocks = item.lesson.blocks;
-    state.currentBlockIndex = 0;
-  } else {
+  if (!isResuming) {
     state.currentBlockIndex = 0;
   }
   saveState();
   renderLessonView();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function backToHub() {
