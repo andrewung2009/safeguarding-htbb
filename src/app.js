@@ -243,6 +243,26 @@ function renderLessonView() {
   if (typeSvg) html += '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="' + typeSvg + '"/></svg>';
   html += typeLabel;
   html += '</div>';
+
+  if (currentBlock.type === 'quiz') {
+    var scenarioBlock = null;
+    for (var s = 0; s < idx; s++) {
+      if (blocks[s].type === 'scenario') { scenarioBlock = blocks[s]; break; }
+    }
+    if (scenarioBlock) {
+      html += '<div class="scenario-ref collapsed" id="scenarioRef">';
+      html += '<button class="scenario-ref-toggle" id="scenarioToggle">';
+      html += ICONS['alert-triangle'];
+      html += '<span class="scenario-ref-label">' + escHtml(scenarioBlock.title) + '</span>';
+      html += '<svg class="scenario-ref-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+      html += '</button>';
+      html += '<div class="scenario-ref-body" id="scenarioBody">';
+      html += '<p class="scenario-ref-text">' + escHtml(scenarioBlock.content) + '</p>';
+      html += '</div>';
+      html += '</div>';
+    }
+  }
+
   html += '<div class="block-container block-enter">';
   html += renderBlock(currentBlock);
   html += '</div>';
@@ -273,6 +293,14 @@ function renderLessonView() {
   attachQuizListeners();
   attachDiscussionListeners();
   attachDeclarationListeners();
+
+  var scenToggle = document.getElementById('scenarioToggle');
+  if (scenToggle) {
+    scenToggle.addEventListener('click', function () {
+      var ref = document.getElementById('scenarioRef');
+      ref.classList.toggle('collapsed');
+    });
+  }
 
   var backBtn = document.getElementById('backToHubBtn');
   if (backBtn) {
