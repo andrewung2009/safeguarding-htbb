@@ -271,6 +271,12 @@ export const COURSE_DATA = {
                 content: "Continue working with the Jasmine & Arthur scenario. Answer Questions 7\u20139 based on Safeguarding Scenario 1."
               },
               {
+                type: "scenario",
+                title: "Safeguarding Scenario 1 — Jasmine & Arthur",
+                content: "You are a CHTBB micro-group leader. A CHTBB teacher in your group shares the following situation with you.\n\nRecently, both of you noticed that a mother named Jasmine has started bringing her young son Arthur, who uses a wheelchair, to church.\n\nAfter church one day, Jasmine approached the teacher and asked if they could speak privately. During the conversation, Jasmine became emotional and began to cry.\n\nShe shared that she has been feeling overwhelmed caring for Arthur. Her husband travels frequently for work and their marriage has been under strain.\n\nJasmine also shared something concerning. She said that last week her husband hit Arthur on the leg because Arthur would not go to sleep. She said this has happened a few times before. Arthur now has a small red bruise on his leg.\n\nJasmine also mentioned that her husband often shouts at her, and that she has been struggling to sleep because of stress.\n\nThe teacher is unsure what to do and asks for your thoughts.",
+                id: "scenario-1"
+              },
+              {
                 type: "quiz",
                 questionNumber: 7,
                 question: "What actions would be most appropriate in this situation? (Select TWO)",
