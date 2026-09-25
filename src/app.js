@@ -124,15 +124,15 @@ function renderHub() {
     var resumeItem = allLessons.find(function (l) { return l.lesson.id === state.currentLessonId; });
     if (resumeItem && !isLessonComplete(resumeItem.lesson)) {
       var rBlocks = resumeItem.lesson.blocks;
-      html += '<div class="hub-resume" id="hubResumeBtn">';
+      html += '<button type="button" class="hub-resume" id="hubResumeBtn">';
       html += '<div class="hub-resume-content">';
       html += '<div class="hub-resume-label">Continue where you left off</div>';
       html += '<div class="hub-resume-title">' + escHtml(resumeItem.lesson.title) + '</div>';
       html += '<div class="hub-resume-meta">' + escHtml(resumeItem.moduleTitle) + '</div>';
       html += '<div class="hub-resume-step">Step ' + (state.currentBlockIndex + 1) + ' of ' + rBlocks.length + '</div>';
       html += '</div>';
-      html += '<div class="hub-resume-btn">Resume<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="9 18 15 12 9 6"/></svg></div>';
-      html += '</div>';
+      html += '<span class="hub-resume-btn" aria-hidden="true">Resume<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="9 18 15 12 9 6"/></svg></span>';
+      html += '</button>';
     }
   }
 
@@ -205,6 +205,7 @@ function backToHub() {
   saveState();
   renderHub();
   updateHeader();
+  updateBottomNav();
 }
 
 function renderLessonView() {
@@ -240,7 +241,7 @@ function renderLessonView() {
 
   html += '<div class="lesson-blocks-progressive">';
   html += '<div class="block-type-pill type-' + currentBlock.type + '">';
-  if (typeSvg) html += '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="' + typeSvg + '"/></svg>';
+  if (typeSvg) html += '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + typeSvg + '"/></svg>';
   html += typeLabel;
   html += '</div>';
 
@@ -267,7 +268,7 @@ function renderLessonView() {
   html += renderBlock(currentBlock);
   html += '</div>';
 
-  if (idx >= blocks.length - 1) {
+  if (idx >= blocks.length - 1 && isBlockComplete(currentBlock)) {
     html += '<div class="block-next-area">';
     html += '<div class="lesson-complete-banner">';
     html += '<div class="completion-emoji">&#127881;</div>';
@@ -296,9 +297,13 @@ function renderLessonView() {
 
   var scenToggle = document.getElementById('scenarioToggle');
   if (scenToggle) {
+    scenToggle.setAttribute('aria-expanded', 'false');
+    scenToggle.setAttribute('aria-controls', 'scenarioBody');
     scenToggle.addEventListener('click', function () {
       var ref = document.getElementById('scenarioRef');
       ref.classList.toggle('collapsed');
+      var expanded = !ref.classList.contains('collapsed');
+      scenToggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
     });
   }
 
@@ -321,6 +326,13 @@ function renderLessonView() {
   updateHeader();
   updateBottomNav();
   window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  var titleEl = container.querySelector('.lesson-title');
+  if (titleEl) {
+    titleEl.setAttribute('tabindex', '-1');
+    titleEl.focus({ preventScroll: true });
+  }
+  announce(lesson.title + ', step ' + (idx + 1) + ' of ' + blocks.length);
 }
 
 function advanceBlock() {
@@ -366,21 +378,23 @@ function renderBlock(block) {
    ============================================= */
 function updateHeader() {
   var backBtn = document.getElementById('headerBackBtn');
-  var progressWrap = document.getElementById('headerProgressWrap');
   var statsWrap = document.getElementById('headerStatsWrap');
 
   if (state.view === 'hub') {
     backBtn.style.display = 'none';
-    progressWrap.style.display = 'none';
     statsWrap.style.display = 'flex';
   } else {
     backBtn.style.display = 'flex';
-    progressWrap.style.display = 'none';
     statsWrap.style.display = 'none';
   }
 
   var completed = getCompletedQuizzes();
   document.getElementById('headerQuizCount').textContent = completed + '/' + totalQuizCount + ' quizzes';
+}
+
+function announce(message) {
+  var el = document.getElementById('a11yAnnouncer');
+  if (el) { el.textContent = ''; setTimeout(function () { el.textContent = message; }, 50); }
 }
 
 function updateBottomNav() {
@@ -418,7 +432,8 @@ function updateBottomNav() {
     var cls = 'nav-dot';
     if (i < idx) cls += ' done';
     else if (i === idx) cls += ' current';
-    dotsHtml += '<div class="' + cls + '"></div>';
+    var ariaAttr = i === idx ? ' aria-current="step"' : '';
+    dotsHtml += '<div class="' + cls + '"' + ariaAttr + '></div>';
   }
   blockSteps.innerHTML = dotsHtml;
 }
@@ -447,14 +462,14 @@ function renderQuiz(block) {
   var cardClass = 'quiz-card';
   if (submitted) cardClass += isCorrect ? ' correct' : ' incorrect';
 
-  var html = '<div class="' + cardClass + '" data-quiz-id="' + block.id + '">';
+  var html = '<div class="' + cardClass + '" data-quiz-id="' + block.id + '" role="group" aria-label="Question ' + block.questionNumber + ': ' + escHtml(block.question) + '">';
   html += '<div class="quiz-header">';
   html += '<div class="quiz-badges">';
   html += '<span class="badge badge-teal">Q' + block.questionNumber + '</span>';
   if (isMulti) html += '<span class="badge badge-gray">Select ALL that apply</span>';
   if (submitted) {
-    html += '<span class="quiz-result ' + (isCorrect ? 'correct' : 'incorrect') + '">';
-    html += isCorrect ? ICONS['check-circle'] : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+    html += '<span class="quiz-result ' + (isCorrect ? 'correct' : 'incorrect') + '" role="status">';
+    html += isCorrect ? ICONS['check-circle'] : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
     html += ' <span class="quiz-result-text">' + (isCorrect ? 'Correct!' : 'Incorrect') + '</span></span>';
     if (isCorrect) {
       html += '<span class="quiz-success-feedback">' + ICONS['check-circle'] + ' Well done!</span>';
@@ -489,11 +504,11 @@ function renderQuiz(block) {
       var isCorrectOpt2 = block.correctAnswers.indexOf(opt.id) !== -1;
       var isSelected2 = existing.selected.indexOf(opt.id) !== -1;
       if (isCorrectOpt2 && isSelected2) {
-        html += '<span class="quiz-option-icon" style="color:var(--emerald-500)">' + ICONS['check-circle'] + '</span>';
+        html += '<span class="quiz-option-icon" style="color:var(--emerald-500)" aria-hidden="true">' + ICONS['check-circle'] + '</span>';
       } else if (!isCorrectOpt2 && isSelected2) {
-        html += '<span class="quiz-option-icon" style="color:var(--red-500)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></span>';
+        html += '<span class="quiz-option-icon" style="color:var(--red-500)" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></span>';
       } else if (isCorrectOpt2) {
-        html += '<span class="quiz-option-icon" style="color:var(--emerald-400)">' + ICONS['check-circle'] + '</span>';
+        html += '<span class="quiz-option-icon" style="color:var(--emerald-400)" aria-hidden="true">' + ICONS['check-circle'] + '</span>';
       }
     }
     html += '</label>';
@@ -527,7 +542,8 @@ function renderDiscussion(block) {
     html += '<p class="discussion-hint"><em>' + escHtml(block.hint) + '</em></p>';
   }
   html += '<div class="discussion-body">';
-  html += '<textarea class="discussion-textarea" data-disc-id="' + block.id + '" placeholder="Share your thoughts here...">' + escHtml(savedText) + '</textarea>';
+  html += '<label for="disc-' + block.id + '" class="sr-only">Your reflection on: ' + escHtml(block.prompt) + '</label>';
+  html += '<textarea class="discussion-textarea" id="disc-' + block.id + '" data-disc-id="' + block.id + '" placeholder="Share your thoughts here...">' + escHtml(savedText) + '</textarea>';
   html += '</div>';
   html += '<div class="discussion-footer">';
   html += '<span class="discussion-charcount">' + savedText.length + ' characters</span>';
@@ -669,27 +685,27 @@ function renderDeclaration(block) {
   html += '</div>';
   html += '<div class="declaration-body">';
 
-  html += '<div class="declaration-field"><label>Full Name <span class="required">*</span></label>';
-  html += '<input type="text" id="decl-name" placeholder="Enter your full name"></div>';
+  html += '<div class="declaration-field"><label for="decl-name">Full Name <span class="required">*</span></label>';
+  html += '<input type="text" id="decl-name" placeholder="Enter your full name" required></div>';
 
-  html += '<div class="declaration-field"><label>Email Address <span class="required">*</span></label>';
-  html += '<input type="email" id="decl-email" placeholder="Enter your email address"></div>';
+  html += '<div class="declaration-field"><label for="decl-email">Email Address <span class="required">*</span></label>';
+  html += '<input type="email" id="decl-email" placeholder="Enter your email address" required></div>';
 
-  html += '<div class="declaration-field"><label>Phone Number</label>';
+  html += '<div class="declaration-field"><label for="decl-phone">Phone Number</label>';
   html += '<input type="tel" id="decl-phone" placeholder="Enter your phone number"></div>';
 
-  html += '<div class="declaration-field"><label>Ministry / Team <span class="required">*</span></label>';
-  html += '<select id="decl-ministry"><option value="">Select your ministry or team</option>';
+  html += '<div class="declaration-field"><label for="decl-ministry">Ministry / Team <span class="required">*</span></label>';
+  html += '<select id="decl-ministry" required><option value="">Select your ministry or team</option>';
   ministryOptions.forEach(function (opt) {
     html += '<option value="' + escHtml(opt) + '">' + escHtml(opt) + '</option>';
   });
   html += '</select></div>';
 
-  html += '<div class="declaration-field"><label>Your Role <span class="required">*</span></label>';
-  html += '<input type="text" id="decl-role" placeholder="Enter your role (e.g., Volunteer, Leader)"></div>';
+  html += '<div class="declaration-field"><label for="decl-role">Your Role <span class="required">*</span></label>';
+  html += '<input type="text" id="decl-role" placeholder="Enter your role (e.g., Volunteer, Leader)" required></div>';
 
-  html += '<div class="declaration-field"><label>Date of Completion <span class="required">*</span></label>';
-  html += '<input type="date" id="decl-date"></div>';
+  html += '<div class="declaration-field"><label for="decl-date">Date of Completion <span class="required">*</span></label>';
+  html += '<input type="date" id="decl-date" required></div>';
 
   html += '<div class="declaration-checkboxes">';
   html += '<h3>Declarations <span style="font-weight:400;font-size:13px;color:var(--slate-400);">(tick all to proceed)</span></h3>';
@@ -705,7 +721,7 @@ function renderDeclaration(block) {
   html += '</ul>';
   html += '</div>';
 
-  html += '<div class="declaration-field"><label>Questions, concerns, or feedback about this training (optional)</label>';
+  html += '<div class="declaration-field"><label for="decl-feedback">Questions, concerns, or feedback about this training (optional)</label>';
   html += '<textarea id="decl-feedback" rows="3" placeholder="Share any questions or feedback..."></textarea>';
   html += '</div>';
 
@@ -721,7 +737,7 @@ function renderDeclaration(block) {
     html += checked + ' of ' + declarationItems.length + ' declarations checked.';
   }
   html += '</p>';
-  html += '<a href="#" class="btn-declaration" id="decl-submit-btn"' + (allChecked ? '' : ' disabled') + ' onclick="return false;">Open Self-Declaration Form</a>';
+  html += '<a href="#" class="btn-declaration" id="decl-submit-btn" aria-disabled="' + (allChecked ? 'false' : 'true') + '" onclick="return false;">Open Self-Declaration Form</a>';
   html += '</div>';
   html += '</div>';
   return html;
@@ -847,7 +863,7 @@ function updateQuizCard(quizId) {
         if (this.checked) {
           if (answer.selected.indexOf(this.value) === -1) answer.selected.push(this.value);
         } else {
-          answer.selected = answer.selected.filter(function (v) { return v !== this.value; });
+          answer.selected = answer.selected.filter(function (v) { return v !== this.value; }.bind(this));
         }
       } else {
         answer.selected = [this.value];
@@ -976,11 +992,11 @@ function attachDeclarationListeners() {
       if (checked === total) {
         feedback.className = 'declaration-feedback ready';
         feedback.innerHTML = ICONS['check-circle'] + ' All declarations checked. You may now submit.';
-        submitBtn.disabled = false;
+        submitBtn.setAttribute('aria-disabled', 'false');
       } else {
         feedback.className = 'declaration-feedback pending';
         feedback.textContent = checked + ' of ' + total + ' declarations checked.';
-        submitBtn.disabled = true;
+        submitBtn.setAttribute('aria-disabled', 'true');
       }
     });
   });
@@ -989,6 +1005,16 @@ function attachDeclarationListeners() {
   if (submitBtn) {
     submitBtn.addEventListener('click', function (e) {
       e.preventDefault();
+      var total = document.querySelectorAll('[data-decl-check]').length;
+      var checked = document.querySelectorAll('[data-decl-check]:checked').length;
+      if (checked < total) {
+        var feedback = document.getElementById('decl-feedback-text');
+        if (feedback) {
+          feedback.className = 'declaration-feedback pending';
+          feedback.textContent = checked + ' of ' + total + ' declarations checked. Please tick all boxes before submitting.';
+        }
+        return;
+      }
       window.open('https://forms.office.com/Pages/ResponsePage.aspx?id=Vh899lFQb0WqKQNhQLPcZdoUSrKAnglKmUU3TRuuYWhUNlBWR05RVENKUzdHSlNDT1NISzNRT0s2Uy4u', '_blank');
     });
   }

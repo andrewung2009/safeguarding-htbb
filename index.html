@@ -8,15 +8,18 @@
   <link rel="icon" type="image/png" href="./htbb-logo.png">
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#0d9488">
+  <meta name="color-scheme" content="light dark">
 </head>
 <body>
 
+  <a href="#contentArea" class="skip-link">Skip to main content</a>
+
   <!-- Loading Screen -->
-  <div id="loading" class="loading-screen">
+  <div id="loading" class="loading-screen" role="status" aria-live="polite">
     <div class="loading-logo">
       <img src="htbb-logo.png" alt="HTBB">
     </div>
-    <div class="loading-spinner"></div>
+    <div class="loading-spinner" aria-hidden="true"></div>
     <p class="loading-text">Loading course...</p>
   </div>
 
@@ -26,53 +29,46 @@
     <!-- Top Header -->
     <header class="top-header">
       <button id="headerBackBtn" class="header-back-btn" style="display:none;" aria-label="Back to modules">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="15 18 9 12 15 6"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
-      <img src="./htbb-logo.png" alt="HTBB" class="header-logo-img">
+      <img src="./htbb-logo.png" alt="" class="header-logo-img" aria-hidden="true">
       <div class="header-title-area">
         <span class="header-course-title">HTBB Safeguarding</span>
       </div>
-      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
-        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" aria-pressed="false">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
       </button>
-      <div class="header-progress" id="headerProgressWrap" style="display:none;">
-        <div class="header-progress-label">
-          <span id="headerProgressLabel">Lesson Progress</span>
-          <span id="headerProgressText">0%</span>
-        </div>
-        <div class="header-progress-bar">
-          <div id="headerProgressFill" class="header-progress-fill" style="width:0%"></div>
-        </div>
-      </div>
       <div class="header-stats" id="headerStatsWrap">
         <div class="header-stat">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
           <span id="headerQuizCount">0/0 quizzes</span>
         </div>
         <div class="header-stat">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           <span>~30 min videos</span>
         </div>
       </div>
     </header>
 
     <!-- Content Area -->
-    <div id="contentArea" class="content-area"></div>
+    <main id="contentArea" class="content-area" tabindex="-1"></main>
 
     <!-- Bottom Navigation -->
-    <footer class="bottom-nav" id="bottomNav" style="display:none;">
+    <nav class="bottom-nav" id="bottomNav" style="display:none;" aria-label="Lesson navigation">
       <button id="prevBtn" class="btn btn-outline btn-sm" disabled>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="15 18 9 12 15 6"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
         <span>Previous</span>
       </button>
-      <div class="block-steps" id="blockSteps"></div>
+      <div class="block-steps" id="blockSteps" role="group" aria-label="Step progress"></div>
       <button id="nextBtn" class="btn btn-primary btn-sm">
         <span>Next</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="9 18 15 12 9 6"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
       </button>
-    </footer>
+    </nav>
   </div>
+
+  <div id="a11yAnnouncer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <script type="module" src="/src/main.js"></script>
   <script>
