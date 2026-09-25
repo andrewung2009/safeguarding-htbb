@@ -83,9 +83,9 @@ npm run preview    # preview the production build locally
 ├── src/
 │   ├── main.js                 # Entry — imports CSS, calls init()
 │   ├── app.js                  # All rendering, event listeners, and init logic
-│   ├── state.js                # localStorage state management (view, progress, answers)
+│   ├── state.js                # localStorage state with schema versioning and sanitization
 │   ├── course-data.js          # Entire course content as COURSE_DATA object
-│   ├── icons.js                # 20 inline SVG icon strings
+│   ├── icons.js                # 17 inline SVG icon strings
 │   ├── utils.js                # Helpers: escHtml, arrEq, getYoutubeEmbedUrl
 │   └── style.css               # Full stylesheet with CSS custom properties
 ├── public/
@@ -125,15 +125,17 @@ Hub View                     Lesson View
 
 ```js
 {
+  v: 2,                              // schema version
   view: "hub" | "lesson",
   currentLessonId: string,
   currentBlockIndex: number,
-  quizAnswers: { [blockId]: { answers: [], submitted: bool } },
+  quizAnswers: { [blockId]: { selected: string[], isCorrect: bool, submitted: bool } },
   discussionTexts: { [blockId]: string },
-  expandedModules: { [moduleId]: bool },
-  declarationChecks: { [key]: bool }
+  declarationChecks: { [declId]: bool }
 }
 ```
+
+State is validated and sanitized on load — corrupt or old-schema data is safely discarded.
 
 **Theme** is stored in a separate `localStorage` key (`htbb-theme`) as `"dark"` or `"light"`. Falls back to system `prefers-color-scheme` on first visit.
 
@@ -149,20 +151,22 @@ All course content lives in `src/course-data.js` as a single `COURSE_DATA` objec
 
 ### Block Types
 
-| Type | Description |
-|------|-------------|
-| `video` | Embedded YouTube video (requires `url` and `title`) |
-| `text` | Rich text content (requires `content` with HTML) |
-| `quiz` | Multiple-choice question (requires `question`, `options`, `correctIndex`) |
-| `discussion` | Open reflection prompt (requires `prompt`) |
-| `scenario` | Real-world situation for discussion (requires `situation`, `questions`) |
-| `principles` | Key principles list (requires `items` array) |
-| `officers` | Safeguarding officer info (requires `roles` array) |
-| `links` | External resource links (requires `links` array) |
-| `warning` | Important notice callout (requires `content`) |
-| `safer-recruitment` | Recruitment policy info (requires `content`) |
-| `declaration` | Self-declaration form (links to Microsoft Forms) |
-| `closing` | Lesson summary (requires `content`) |
+| Type | Description | Required fields |
+|------|-------------|-----------------|
+| `video` | Embedded YouTube video | `youtubeUrl`, `title` |
+| `text` | Plain text content | `content` |
+| `quiz` | Multiple-choice question | `question`, `questionNumber`, `options[]`, `correctAnswers[]`, `selectMode` (`"single"`/`"multi"`), `id` |
+| `discussion` | Open reflection prompt | `prompt`, `duration`, `id` |
+| `scenario` | Real-world situation shown above its quizzes | `title`, `content`, `id` |
+| `principles` | Key principles list | `title`, `sections[]` (each with `heading`, `content`, `items[]`) |
+| `officers` | Safeguarding officer info | `roles[]` |
+| `links` | External resource links | `title`, `links[]` (each with `label`, `url`) |
+| `warning` | Important notice callout | `content` |
+| `safer-recruitment` | Recruitment policy info | `items[]` |
+| `declaration` | Self-declaration form (opens Microsoft Forms) | none |
+| `closing` | Lesson summary (currently unused) | `documents[]` |
+
+Quiz `options[]` entries are objects: `{ id, label, text }`. `correctAnswers` is an array of option ids.
 
 ### Adding a Lesson
 
@@ -172,10 +176,16 @@ In `src/course-data.js`, add a lesson object to the appropriate module:
 {
   id: "lesson-new-topic",
   title: "New Topic",
+  icon: "video",
   blocks: [
-    { type: "video", id: "vid-new", url: "https://youtube.com/...", title: "Video Title" },
-    { type: "quiz", id: "quiz-new", question: "What did you learn?", options: ["A", "B", "C"], correctIndex: 0 },
-    { type: "text", id: "text-new", content: "<p>Key takeaways...</p>" }
+    { type: "video", youtubeUrl: "https://youtube.com/watch?v=...", title: "Video Title" },
+    { type: "quiz", id: "quiz-new", questionNumber: 1, question: "What did you learn?",
+      options: [
+        { id: "a", label: "A.", text: "First option" },
+        { id: "b", label: "B.", text: "Second option" }
+      ],
+      correctAnswers: ["a"], selectMode: "single" },
+    { type: "text", content: "Key takeaways..." }
   ]
 }
 ```

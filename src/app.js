@@ -233,7 +233,7 @@ function renderLessonView() {
   html += '</div>';
   html += '</div>';
 
-  var blockTypeLabels = { video:'Video', quiz:'Quiz', discussion:'Reflection', scenario:'Scenario', text:'Reading', principles:'Key Principles', officers:'Safeguarding Officers', links:'Resources', warning:'Important Notice', 'safer-recruitment':'Safer Recruitment', declaration:'Self-Declaration', closing:'Summary' };
+  var blockTypeLabels = { video:'Video', quiz:'Quiz', discussion:'Reflection', scenario:'Scenario', text:'Reading', principles:'Key Principles', officers:'Safeguarding Officers', links:'Resources', warning:'Important Notice', 'safer-recruitment':'Safer Recruitment', declaration:'Self-Declaration' };
   var blockTypeIcons = { video:'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z', quiz:'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', discussion:'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z', scenario:'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z', text:'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' };
   var currentBlock = blocks[idx];
   var typeLabel = blockTypeLabels[currentBlock.type] || currentBlock.type;
@@ -368,7 +368,6 @@ function renderBlock(block) {
     case 'warning': return renderWarning(block);
     case 'safer-recruitment': return renderSaferRecruitment(block);
     case 'declaration': return renderDeclaration(block);
-    case 'closing': return renderClosing(block);
     default: return '';
   }
 }
@@ -740,24 +739,6 @@ function renderDeclaration(block) {
   html += '<a href="#" class="btn-declaration" id="decl-submit-btn" aria-disabled="' + (allChecked ? 'false' : 'true') + '" onclick="return false;">Open Self-Declaration Form</a>';
   html += '</div>';
   html += '</div>';
-  return html;
-}
-
-function renderClosing(block) {
-  var html = '<div class="closing-section">';
-  html += '<div class="closing-box">';
-  html += '<div class="closing-heading">' + ICONS['book-open'] + ' <h2>Required Reading</h2></div>';
-  html += '<p class="closing-text">Upon reading all the required documents, you can scan the QR code or click the link below to sign the Self-Declaration Form.</p>';
-  html += '<div class="closing-doc-list">';
-  block.documents.forEach(function (doc) {
-    html += '<div class="closing-doc-item"><div class="closing-doc-icon">' + ICONS['arrow-right'] + '</div><span class="closing-doc-name">' + escHtml(doc) + '</span></div>';
-  });
-  html += '</div>';
-  html += '<div class="completion-card">';
-  html += '<div class="completion-emoji">&#127881;</div>';
-  html += '<h3>Course Complete!</h3>';
-  html += '<p>Thank you for completing the HTBB Safeguarding Course. Your commitment to keeping our church community safe is valued.</p>';
-  html += '</div></div></div>';
   return html;
 }
 
