@@ -130,8 +130,7 @@ Hub View                     Lesson View
   currentLessonId: string,
   currentBlockIndex: number,
   quizAnswers: { [blockId]: { selected: string[], isCorrect: bool, submitted: bool } },
-  discussionTexts: { [blockId]: string },
-  declarationChecks: { [declId]: bool }
+  discussionTexts: { [blockId]: string }
 }
 ```
 
@@ -164,7 +163,6 @@ All course content lives in `src/course-data.js` as a single `COURSE_DATA` objec
 | `warning` | Important notice callout | `content` |
 | `safer-recruitment` | Recruitment policy info | `items[]` |
 | `declaration` | Self-declaration form (opens Microsoft Forms) | none |
-| `closing` | Lesson summary (currently unused) | `documents[]` |
 
 Quiz `options[]` entries are objects: `{ id, label, text }`. `correctAnswers` is an array of option ids.
 

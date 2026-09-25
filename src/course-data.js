@@ -86,8 +86,8 @@ export const COURSE_DATA = {
                 title: "Required Reading",
                 links: [
                   { label: "HTBB Safeguarding Page", url: "https://www.htbb.org/safeguarding" },
-                  { label: "HTBB Safeguarding Policy", url: "#" },
-                  { label: "Behaviour Protocols", url: "#" }
+                  { label: "HTBB Safeguarding Policy", url: "https://drive.google.com/file/d/1UeSS593_1Sl7SE79O20yK1zxbThsECh0/view" },
+                  { label: "Behaviour Protocols", url: "https://drive.google.com/file/d/12v0yoVSTtGL1HPfnLcc6Tb-V1UzAXAkA/view" }
                 ]
               },
               {
@@ -647,10 +647,10 @@ export const COURSE_DATA = {
                 type: "links",
                 title: "Required Resources",
                 links: [
-                  { label: "HTBB Safeguarding Policy", url: "#" },
-                  { label: "Staff & Volunteer Behaviour Protocols", url: "#" },
-                  { label: "Safeguarding Handbook", url: "#" },
-                  { label: "Incident Reporting Form", url: "#" }
+                  { label: "HTBB Safeguarding Policy", url: "https://drive.google.com/file/d/1UeSS593_1Sl7SE79O20yK1zxbThsECh0/view" },
+                  { label: "Staff & Volunteer Behaviour Protocols", url: "https://drive.google.com/file/d/12v0yoVSTtGL1HPfnLcc6Tb-V1UzAXAkA/view" },
+                  { label: "Safeguarding Handbook", url: "https://drive.google.com/file/d/19jQGYC6ILuuPiqMJvrGna-GTkuAV6qJb/view" },
+                  { label: "Incident Reporting Form", url: "https://forms.office.com/pages/responsepage.aspx?id=Vh899lFQb0WqKQNhQLPcZdoUSrKAnglKmUU3TRuuYWhUNlBWR05RVENKUzdHSlNDT1NISzNRT0s2Uy4u&route=shorturl" }
                 ]
               },
               {

@@ -43,7 +43,7 @@ Deploys automatically on push to `main` via GitHub Actions (`peaceiris/actions-g
 main.js → app.js → icons.js, utils.js, state.js, course-data.js
 ```
 
-**State:** `localStorage` key `htbb-safeguarding-state` (schema v2). Shape: `{ v, view, currentLessonId, currentBlockIndex, quizAnswers, discussionTexts, declarationChecks }`. View is `'hub'` or `'lesson'`. `currentBlockIndex` tracks progressive block disclosure within a lesson. Theme preference stored separately under `htbb-theme`.
+**State:** `localStorage` key `htbb-safeguarding-state` (schema v2). Shape: `{ v, view, currentLessonId, currentBlockIndex, quizAnswers, discussionTexts }`. View is `'hub'` or `'lesson'`. `currentBlockIndex` tracks progressive block disclosure within a lesson. Theme preference stored separately under `htbb-theme`.
 
 **Content block types:** `video`, `quiz`, `discussion`, `scenario`, `text`, `principles`, `officers`, `links`, `warning`, `safer-recruitment`, `declaration`
 
@@ -86,7 +86,8 @@ All course content lives in `src/course-data.js`. To add/modify lessons, edit th
 
 - `COURSE_DATA` is ~660 lines of inline JS — easy to break with missing commas/brackets.
 - YouTube URL parsing via regex in `getYoutubeEmbedUrl()`.
-- Declaration form opens a Microsoft Forms URL in a new tab; gated by checkbox state via `aria-disabled`.
+- Declaration block renders a prominent link to `DECLARATION_URL` (forms.cloud.microsoft) in a new tab — no in-app form, no gating.
+- The final module is locked on the hub until every other lesson is complete (`isModuleLocked()` / `isLessonLocked()` in app.js).
 - Progress percentage is quiz-only, not discussions or other block types.
 - Quiz handlers exist in two places (`updateQuizCard` and `attachQuizListeners`) — keep them in sync or consolidate.
 - WSL users must run `npm` from WSL, not Windows PowerShell.

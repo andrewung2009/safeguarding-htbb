@@ -6,6 +6,29 @@ import { COURSE_DATA } from './course-data.js';
 let allLessons = [];
 let totalQuizCount = 0;
 
+var blockTypeLabels = { video:'Video', quiz:'Quiz', discussion:'Reflection', scenario:'Scenario', text:'Reading', principles:'Key Principles', officers:'Safeguarding Officers', links:'Resources', warning:'Important Notice', 'safer-recruitment':'Safer Recruitment', declaration:'Self-Declaration' };
+
+var celebratedLessonIds = new Set();
+var scenarioExpanded = false;
+var announceTimer = null;
+
+var DECLARATION_URL = 'https://forms.cloud.microsoft/pages/responsepage.aspx?id=Vh899lFQb0WqKQNhQLPcZdoUSrKAnglKmUU3TRuuYWhUMDlNRlpaWTg4SzJLOFFQNkVYNFBSWTUzWi4u';
+var LOCK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+
+function isModuleLocked(moduleId) {
+  var mods = COURSE_DATA.modules;
+  if (!mods.length || mods[mods.length - 1].id !== moduleId) return false;
+  return !allLessons.every(function (l) {
+    return l.moduleId === moduleId || isLessonComplete(l.lesson);
+  });
+}
+
+function isLessonLocked(lessonId) {
+  var entry = allLessons.find(function (l) { return l.lesson.id === lessonId; });
+  if (!entry) return false;
+  return isModuleLocked(entry.moduleId);
+}
+
 function buildLessonList() {
   allLessons = [];
   totalQuizCount = 0;
@@ -98,6 +121,8 @@ function renderHub() {
   var container = document.getElementById('contentArea');
   var pct = getOverallProgress();
   var completed = getCompletedQuizzes();
+  var allDone = allLessons.every(function (l) { return isLessonComplete(l.lesson); });
+  var ringCirc = 2 * Math.PI * 52;
 
   var html = '';
   html += '<div class="hub-view">';
@@ -107,30 +132,42 @@ function renderHub() {
   html += '<p class="hub-hero-subtitle">Complete all modules to finish the course</p>';
   html += '<div class="hub-hero-stats">';
   html += '<div class="hub-stat-ring">';
-  html += '<svg viewBox="0 0 120 120" class="hub-ring-svg">';
-  html += '<circle cx="60" cy="60" r="52" fill="none" stroke="var(--slate-100)" stroke-width="8"/>';
-  html += '<circle cx="60" cy="60" r="52" fill="none" stroke="var(--teal-500)" stroke-width="8" stroke-linecap="round" stroke-dasharray="' + (2 * Math.PI * 52) + '" stroke-dashoffset="' + (2 * Math.PI * 52 * (1 - pct / 100)) + '" transform="rotate(-90 60 60)" class="hub-ring-fill"/>';
+  html += '<svg viewBox="0 0 120 120" class="hub-ring-svg" role="img" aria-label="Course progress: ' + pct + ' percent">';
+  html += '<circle cx="60" cy="60" r="52" fill="none" stroke="var(--border)" stroke-width="8"/>';
+  html += '<circle cx="60" cy="60" r="52" fill="none" stroke="var(--teal-500)" stroke-width="8" stroke-linecap="round" stroke-dasharray="' + ringCirc + '" stroke-dashoffset="' + (ringCirc * (1 - pct / 100)) + '" transform="rotate(-90 60 60)" class="hub-ring-fill"/>';
   html += '<text x="60" y="60" text-anchor="middle" dominant-baseline="central" class="hub-ring-text">' + pct + '%</text>';
   html += '</svg>';
   html += '</div>';
   html += '<div class="hub-stat-details">';
   html += '<div class="hub-stat-row"><span class="hub-stat-num">' + completed + '/' + totalQuizCount + '</span><span class="hub-stat-label">quizzes completed</span></div>';
-  html += '<div class="hub-stat-row"><span class="hub-stat-num">' + allLessons.length + '</span><span class="hub-stat-label">lessons total</span></div>';
+  html += '<div class="hub-stat-row"><span class="hub-stat-num">' + COURSE_DATA.modules.length + '</span><span class="hub-stat-label">modules</span></div>';
+  html += '<div class="hub-stat-row"><span class="hub-stat-num">' + allLessons.length + '</span><span class="hub-stat-label">lessons</span></div>';
   html += '</div>';
   html += '</div>';
   html += '</div>';
 
-  if (state.currentLessonId && state.currentBlockIndex > 0) {
+  if (allDone) {
+    html += '<div class="hub-complete-card">';
+    html += '<div class="hub-complete-icon">' + ICONS['check-circle'] + '</div>';
+    html += '<h2>All lessons complete!</h2>';
+    html += '<p>Final step: complete the official self-declaration form to sign off the HTBB Safeguarding Training course.</p>';
+    html += '<a class="btn btn-primary hub-complete-cta" href="' + DECLARATION_URL + '" target="_blank" rel="noopener noreferrer">Open Self-Declaration Form<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>';
+    html += '</div>';
+  }
+
+  var resumeLocked = state.currentLessonId && isLessonLocked(state.currentLessonId);
+  if (state.currentLessonId && !allDone && !resumeLocked) {
     var resumeItem = allLessons.find(function (l) { return l.lesson.id === state.currentLessonId; });
     if (resumeItem && !isLessonComplete(resumeItem.lesson)) {
       var rBlocks = resumeItem.lesson.blocks;
+      var rIdx = Math.min(state.currentBlockIndex, rBlocks.length - 1);
       html += '<button type="button" class="hub-resume" id="hubResumeBtn">';
-      html += '<div class="hub-resume-content">';
-      html += '<div class="hub-resume-label">Continue where you left off</div>';
-      html += '<div class="hub-resume-title">' + escHtml(resumeItem.lesson.title) + '</div>';
-      html += '<div class="hub-resume-meta">' + escHtml(resumeItem.moduleTitle) + '</div>';
-      html += '<div class="hub-resume-step">Step ' + (state.currentBlockIndex + 1) + ' of ' + rBlocks.length + '</div>';
-      html += '</div>';
+      html += '<span class="hub-resume-content">';
+      html += '<span class="hub-resume-label">Continue where you left off</span>';
+      html += '<span class="hub-resume-title">' + escHtml(resumeItem.lesson.title) + '</span>';
+      html += '<span class="hub-resume-meta">' + escHtml(resumeItem.moduleTitle) + '</span>';
+      html += '<span class="hub-resume-step">Step ' + (rIdx + 1) + ' of ' + rBlocks.length + '</span>';
+      html += '</span>';
       html += '<span class="hub-resume-btn" aria-hidden="true">Resume<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="9 18 15 12 9 6"/></svg></span>';
       html += '</button>';
     }
@@ -140,26 +177,35 @@ function renderHub() {
   COURSE_DATA.modules.forEach(function (mod, modIdx) {
     var modPct = getModuleProgress(mod);
     var allComplete = mod.lessons.every(function (l) { return isLessonComplete(l); });
-    var lessonsComplete = mod.lessons.filter(function (l) { return isLessonComplete(l); }).length;
-    var gradIdx = (modIdx % 7) + 1;
+    var locked = isModuleLocked(mod.id);
+    var tint = locked ? 'tint-5' : 'tint-' + ((modIdx % 7) + 1);
+    var currentLesson = mod.lessons.find(function (l) { return !isLessonComplete(l); }) || mod.lessons[mod.lessons.length - 1];
 
-    html += '<button class="hub-module-card' + (allComplete ? ' complete' : '') + '" data-module="' + mod.id + '" style="animation:cardSlideIn 0.5s var(--ease-out) ' + (modIdx * 0.08) + 's both">';
-    html += '<span class="hub-module-number">' + String(modIdx + 1).padStart(2, '0') + '</span>';
+    html += '<article class="hub-module-card' + (allComplete ? ' complete' : '') + (locked ? ' locked' : '') + '" data-module="' + mod.id + '" style="animation:cardSlideIn 0.5s var(--ease-out) ' + (modIdx * 0.08) + 's both">';
+    if (!locked) html += '<button type="button" class="hub-module-open" aria-label="Open ' + escHtml(mod.title) + '"></button>';
     html += '<div class="hub-module-header">';
-    html += '<div class="hub-module-icon gradient-' + gradIdx + '">' + (ICONS[mod.icon] || ICONS['book-open']) + '</div>';
-    if (allComplete) html += '<div class="hub-module-check">' + ICONS['check-circle'] + '</div>';
+    html += '<div class="hub-module-icon ' + tint + '">' + (ICONS[mod.icon] || ICONS['book-open']) + '</div>';
+    if (locked) {
+      html += '<div class="hub-module-lock" aria-hidden="true">' + LOCK_ICON + '</div>';
+    } else if (allComplete) {
+      html += '<div class="hub-module-check">' + ICONS['check-circle'] + '</div>';
+    }
+    html += '<span class="hub-module-index">' + String(modIdx + 1).padStart(2, '0') + '</span>';
     html += '</div>';
     html += '<h3 class="hub-module-title">' + escHtml(mod.title.replace(/^Module \d+:\s*/, '')) + '</h3>';
-    var currentLesson = mod.lessons.find(function (l) { return !isLessonComplete(l); }) || mod.lessons[mod.lessons.length - 1];
-    if (allComplete) {
+    if (locked) {
+      html += '<p class="hub-module-meta">Complete all other modules to unlock</p>';
+    } else if (allComplete) {
       html += '<p class="hub-module-meta">All lessons complete</p>';
     } else {
       html += '<p class="hub-module-meta">' + escHtml(currentLesson.title) + '</p>';
     }
-    html += '<div class="hub-module-progress">';
-    html += '<div class="hub-module-progress-fill" style="width:' + modPct + '%"></div>';
-    html += '</div>';
-    html += '</button>';
+    if (!locked) {
+      html += '<div class="hub-module-progress" role="progressbar" aria-label="' + escHtml(mod.title) + ' progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + modPct + '">';
+      html += '<div class="hub-module-progress-fill" style="width:' + modPct + '%"></div>';
+      html += '</div>';
+    }
+    html += '</article>';
   });
   html += '</div>';
   html += '</div>';
@@ -168,7 +214,8 @@ function renderHub() {
 
   container.querySelectorAll('.hub-module-card').forEach(function (card) {
     card.addEventListener('click', function () {
-      var modId = this.getAttribute('data-module');
+      if (card.classList.contains('locked')) return;
+      var modId = card.getAttribute('data-module');
       var mod = COURSE_DATA.modules.find(function (m) { return m.id === modId; });
       if (!mod || !mod.lessons.length) return;
       var firstIncomplete = mod.lessons.find(function (l) { return !isLessonComplete(l); });
@@ -189,15 +236,19 @@ function renderHub() {
    LESSON VIEW — Progressive Disclosure
    ============================================= */
 function enterLesson(lessonId) {
+  if (isLessonLocked(lessonId)) {
+    announce('Complete all other modules to unlock this section.');
+    return;
+  }
   var isResuming = (state.currentLessonId === lessonId);
   state.view = 'lesson';
   state.currentLessonId = lessonId;
   if (!isResuming) {
     state.currentBlockIndex = 0;
   }
+  scenarioExpanded = false;
   saveState();
   renderLessonView();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function backToHub() {
@@ -233,17 +284,9 @@ function renderLessonView() {
   html += '</div>';
   html += '</div>';
 
-  var blockTypeLabels = { video:'Video', quiz:'Quiz', discussion:'Reflection', scenario:'Scenario', text:'Reading', principles:'Key Principles', officers:'Safeguarding Officers', links:'Resources', warning:'Important Notice', 'safer-recruitment':'Safer Recruitment', declaration:'Self-Declaration' };
-  var blockTypeIcons = { video:'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z', quiz:'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', discussion:'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z', scenario:'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z', text:'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' };
   var currentBlock = blocks[idx];
-  var typeLabel = blockTypeLabels[currentBlock.type] || currentBlock.type;
-  var typeSvg = blockTypeIcons[currentBlock.type] || '';
 
   html += '<div class="lesson-blocks-progressive">';
-  html += '<div class="block-type-pill type-' + currentBlock.type + '">';
-  if (typeSvg) html += '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + typeSvg + '"/></svg>';
-  html += typeLabel;
-  html += '</div>';
 
   if (currentBlock.type === 'quiz') {
     var scenarioBlock = null;
@@ -251,7 +294,7 @@ function renderLessonView() {
       if (blocks[s].type === 'scenario') { scenarioBlock = blocks[s]; break; }
     }
     if (scenarioBlock) {
-      html += '<div class="scenario-ref collapsed" id="scenarioRef">';
+      html += '<div class="scenario-ref' + (scenarioExpanded ? '' : ' collapsed') + '" id="scenarioRef">';
       html += '<button class="scenario-ref-toggle" id="scenarioToggle">';
       html += ICONS['alert-triangle'];
       html += '<span class="scenario-ref-label">' + escHtml(scenarioBlock.title) + '</span>';
@@ -264,14 +307,14 @@ function renderLessonView() {
     }
   }
 
-  html += '<div class="block-container block-enter">';
+  html += '<div class="block-container">';
   html += renderBlock(currentBlock);
   html += '</div>';
 
   if (idx >= blocks.length - 1 && isBlockComplete(currentBlock)) {
     html += '<div class="block-next-area">';
     html += '<div class="lesson-complete-banner">';
-    html += '<div class="completion-emoji">&#127881;</div>';
+    html += '<div class="completion-icon">' + ICONS['check-circle'] + '</div>';
     html += '<h3>Lesson Complete!</h3>';
     html += '<p>You\'ve finished this lesson. Great work!</p>';
     html += '<div class="lesson-complete-actions">';
@@ -293,17 +336,16 @@ function renderLessonView() {
 
   attachQuizListeners();
   attachDiscussionListeners();
-  attachDeclarationListeners();
 
   var scenToggle = document.getElementById('scenarioToggle');
   if (scenToggle) {
-    scenToggle.setAttribute('aria-expanded', 'false');
+    scenToggle.setAttribute('aria-expanded', scenarioExpanded ? 'true' : 'false');
     scenToggle.setAttribute('aria-controls', 'scenarioBody');
     scenToggle.addEventListener('click', function () {
       var ref = document.getElementById('scenarioRef');
       ref.classList.toggle('collapsed');
-      var expanded = !ref.classList.contains('collapsed');
-      scenToggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      scenarioExpanded = !ref.classList.contains('collapsed');
+      scenToggle.setAttribute('aria-expanded', scenarioExpanded ? 'true' : 'false');
     });
   }
 
@@ -318,7 +360,6 @@ function renderLessonView() {
       var nextIdx = findCurrentIndex() + 1;
       if (nextIdx < allLessons.length) {
         enterLesson(allLessons[nextIdx].lesson.id);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     });
   }
@@ -343,7 +384,7 @@ function advanceBlock() {
     state.currentBlockIndex++;
     saveState();
     renderLessonView();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    maybeCelebrate(null);
   }
 }
 
@@ -393,7 +434,10 @@ function updateHeader() {
 
 function announce(message) {
   var el = document.getElementById('a11yAnnouncer');
-  if (el) { el.textContent = ''; setTimeout(function () { el.textContent = message; }, 50); }
+  if (!el) return;
+  clearTimeout(announceTimer);
+  el.textContent = '';
+  announceTimer = setTimeout(function () { el.textContent = message; }, 50);
 }
 
 function updateBottomNav() {
@@ -423,18 +467,34 @@ function updateBottomNav() {
     var needsAction = block.type === 'quiz' || block.type === 'discussion';
     var canAdvance = needsAction ? isBlockComplete(block) : true;
     nextBtn.disabled = !canAdvance;
-    nextBtn.querySelector('span').textContent = canAdvance ? 'Next Step' : 'Complete to continue';
+    var idleLabel = block.type === 'quiz' ? 'Answer to continue' : (block.type === 'discussion' ? 'Save to continue' : 'Next Step');
+    nextBtn.querySelector('span').textContent = canAdvance ? 'Next Step' : idleLabel;
   }
 
+  var reachable = true;
   var dotsHtml = '';
   for (var i = 0; i < blocks.length; i++) {
+    if (i > 0 && !isBlockComplete(blocks[i - 1])) reachable = false;
     var cls = 'nav-dot';
     if (i < idx) cls += ' done';
     else if (i === idx) cls += ' current';
-    var ariaAttr = i === idx ? ' aria-current="step"' : '';
-    dotsHtml += '<div class="' + cls + '"' + ariaAttr + '></div>';
+    var stepLabel = blockTypeLabels[blocks[i].type] || blocks[i].type;
+    dotsHtml += '<button type="button" class="' + cls + '" data-step="' + i + '"' +
+      ' aria-label="Step ' + (i + 1) + ' of ' + blocks.length + ': ' + stepLabel + '"' +
+      (i === idx ? ' aria-current="step"' : '') +
+      (reachable ? '' : ' disabled') + '></button>';
   }
   blockSteps.innerHTML = dotsHtml;
+
+  blockSteps.querySelectorAll('.nav-dot').forEach(function (dot) {
+    dot.addEventListener('click', function () {
+      var step = parseInt(this.getAttribute('data-step'), 10);
+      if (isNaN(step) || step === state.currentBlockIndex) return;
+      state.currentBlockIndex = step;
+      saveState();
+      renderLessonView();
+    });
+  });
 }
 
 /* =============================================
@@ -443,9 +503,15 @@ function updateBottomNav() {
 function renderVideo(block) {
   var embedUrl = block.youtubeUrl ? getYoutubeEmbedUrl(block.youtubeUrl) : null;
   var html = '<div class="video-block">';
+  if (block.title || block.duration) {
+    html += '<div class="video-meta">';
+    if (block.title) html += '<span class="video-title">' + escHtml(block.title) + '</span>';
+    if (block.duration) html += '<span class="video-duration">' + ICONS['clock'] + escHtml(block.duration) + '</span>';
+    html += '</div>';
+  }
   if (embedUrl) {
     html += '<div class="video-wrapper">';
-    html += '<iframe width="963" height="542" src="' + escHtml(embedUrl) + '" title="' + escHtml(block.title || 'Course Video') + '" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>';
+    html += '<iframe width="963" height="542" src="' + escHtml(embedUrl) + '" title="' + escHtml(block.title || 'Course Video') + '" loading="lazy" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>';
     html += '</div>';
   }
   html += '</div>';
@@ -469,7 +535,7 @@ function renderQuiz(block) {
   if (submitted) {
     html += '<span class="quiz-result ' + (isCorrect ? 'correct' : 'incorrect') + '" role="status">';
     html += isCorrect ? ICONS['check-circle'] : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
-    html += ' <span class="quiz-result-text">' + (isCorrect ? 'Correct!' : 'Incorrect') + '</span></span>';
+    html += ' ' + (isCorrect ? 'Correct!' : 'Incorrect') + '</span>';
     if (isCorrect) {
       html += '<span class="quiz-success-feedback">' + ICONS['check-circle'] + ' Well done!</span>';
     }
@@ -658,85 +724,14 @@ function renderSaferRecruitment(block) {
 }
 
 function renderDeclaration(block) {
-  var declarationItems = [
-    "I have watched all video lessons and completed all modules in the HTBB Safeguarding Training course.",
-    "I have completed all quizzes \u2014 Safeguarding Scenario 1 (Jasmine & Arthur), Scenario 2 (Daniel), and Scenario 3 (Brandon).",
-    "I understand what safeguarding means in a church context and why it is important at HTBB.",
-    "I understand how to recognise different forms of abuse including physical, emotional, and psychological abuse.",
-    "I know how to respond to a safeguarding disclosure and understand I must report concerns to the HTBB Safeguarding Officer within 24 hours.",
-    "I understand safeguarding practices required when working with children \u2014 including supervision, physical contact boundaries, and communication guidelines.",
-    "I understand how to serve vulnerable adults safely, including maintaining healthy boundaries and avoiding dependency relationships.",
-    "I commit to applying these safeguarding principles in my ministry role at HTBB and will raise any concerns with the Safeguarding Officer promptly."
-  ];
-
-  var ministryOptions = [
-    "Children's Ministry", "Youth Ministry", "Connect Groups",
-    "Social Action/Outreach", "Worship Team", "Welcome Team",
-    "Alpha Team", "Other"
-  ];
-
-  var checkedState = state.declarationChecks || {};
-
   var html = '<div class="declaration-card">';
   html += '<div class="declaration-header">';
   html += '<h2>Safeguarding Self-Declaration</h2>';
-  html += '<p>Fill in all fields and tick each declaration box to officially sign off. Your response will be sent to the HTBB Safeguarding Team.</p>';
+  html += '<p>This is the final step of the course. Please complete the official self-declaration form to sign off your HTBB Safeguarding Training.</p>';
   html += '</div>';
-  html += '<div class="declaration-body">';
-
-  html += '<div class="declaration-field"><label for="decl-name">Full Name <span class="required">*</span></label>';
-  html += '<input type="text" id="decl-name" placeholder="Enter your full name" required></div>';
-
-  html += '<div class="declaration-field"><label for="decl-email">Email Address <span class="required">*</span></label>';
-  html += '<input type="email" id="decl-email" placeholder="Enter your email address" required></div>';
-
-  html += '<div class="declaration-field"><label for="decl-phone">Phone Number</label>';
-  html += '<input type="tel" id="decl-phone" placeholder="Enter your phone number"></div>';
-
-  html += '<div class="declaration-field"><label for="decl-ministry">Ministry / Team <span class="required">*</span></label>';
-  html += '<select id="decl-ministry" required><option value="">Select your ministry or team</option>';
-  ministryOptions.forEach(function (opt) {
-    html += '<option value="' + escHtml(opt) + '">' + escHtml(opt) + '</option>';
-  });
-  html += '</select></div>';
-
-  html += '<div class="declaration-field"><label for="decl-role">Your Role <span class="required">*</span></label>';
-  html += '<input type="text" id="decl-role" placeholder="Enter your role (e.g., Volunteer, Leader)" required></div>';
-
-  html += '<div class="declaration-field"><label for="decl-date">Date of Completion <span class="required">*</span></label>';
-  html += '<input type="date" id="decl-date" required></div>';
-
-  html += '<div class="declaration-checkboxes">';
-  html += '<h3>Declarations <span style="font-weight:400;font-size:13px;color:var(--slate-400);">(tick all to proceed)</span></h3>';
-  html += '<ul class="declaration-checkbox-list" id="decl-checkboxes">';
-  declarationItems.forEach(function (item, idx) {
-    var id = 'decl-check-' + idx;
-    var isChecked = checkedState[id];
-    html += '<li' + (isChecked ? ' class="checked"' : '') + '>';
-    html += '<input type="checkbox" id="' + id + '" data-decl-check="' + idx + '"' + (isChecked ? ' checked' : '') + '>';
-    html += '<label for="' + id + '">' + escHtml(item) + '</label>';
-    html += '</li>';
-  });
-  html += '</ul>';
-  html += '</div>';
-
-  html += '<div class="declaration-field"><label for="decl-feedback">Questions, concerns, or feedback about this training (optional)</label>';
-  html += '<textarea id="decl-feedback" rows="3" placeholder="Share any questions or feedback..."></textarea>';
-  html += '</div>';
-
-  html += '</div>';
-
-  var allChecked = declarationItems.every(function (_, idx) { return checkedState['decl-check-' + idx]; });
   html += '<div class="declaration-footer">';
-  html += '<p class="declaration-feedback ' + (allChecked ? 'ready' : 'pending') + '" id="decl-feedback-text">';
-  if (allChecked) {
-    html += ICONS['check-circle'] + ' All declarations checked. You may now submit.';
-  } else {
-    var checked = declarationItems.filter(function (_, idx) { return checkedState['decl-check-' + idx]; }).length;
-    html += checked + ' of ' + declarationItems.length + ' declarations checked.';
-  }
-  html += '</p>';
-  html += '<a href="#" class="btn-declaration" id="decl-submit-btn" aria-disabled="' + (allChecked ? 'false' : 'true') + '" onclick="return false;">Open Self-Declaration Form</a>';
+  html += '<a class="btn-declaration" href="' + DECLARATION_URL + '" target="_blank" rel="noopener noreferrer">Open Self-Declaration Form<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>';
+  html += '<p class="declaration-form-note">Opens in a new tab. Your response is sent directly to the HTBB Safeguarding Team.</p>';
   html += '</div>';
   html += '</div>';
   return html;
@@ -779,6 +774,16 @@ function launchConfetti(originEl) {
   }, 2500);
 }
 
+function maybeCelebrate(originEl) {
+  var item = getCurrentLesson();
+  if (!item) return;
+  var lessonId = item.lesson.id;
+  if (celebratedLessonIds.has(lessonId)) return;
+  if (!isLessonComplete(item.lesson)) return;
+  celebratedLessonIds.add(lessonId);
+  launchConfetti(originEl);
+}
+
 /* =============================================
    QUIZ CARD IN-PLACE UPDATE
    ============================================= */
@@ -814,10 +819,10 @@ function updateQuizCard(quizId) {
       answer.isCorrect = correct;
       answer.submitted = true;
       saveState();
-      if (correct) launchConfetti(updatedCard);
       updateQuizCard(quizId);
       updateHeader();
       updateBottomNav();
+      maybeCelebrate(updatedCard);
     });
   }
 
@@ -899,13 +904,10 @@ function attachQuizListeners() {
       answer.submitted = true;
       saveState();
 
-      if (correct) {
-        launchConfetti(this.closest('.quiz-card'));
-      }
-
       updateQuizCard(quizId);
       updateHeader();
       updateBottomNav();
+      maybeCelebrate(document.querySelector('.quiz-card[data-quiz-id="' + quizId + '"]'));
     });
   });
 
@@ -950,55 +952,9 @@ function attachDiscussionListeners() {
       this.setAttribute('data-disc-id', discId);
       updateHeader();
       updateBottomNav();
+      maybeCelebrate(this.closest('.discussion-card'));
     });
   });
-}
-
-function attachDeclarationListeners() {
-  document.querySelectorAll('[data-decl-check]').forEach(function (cb) {
-    cb.addEventListener('change', function () {
-      if (!state.declarationChecks) state.declarationChecks = {};
-      state.declarationChecks[this.id] = this.checked;
-      saveState();
-      var li = this.closest('li');
-      if (this.checked) {
-        li.classList.add('checked');
-      } else {
-        li.classList.remove('checked');
-      }
-      var total = document.querySelectorAll('[data-decl-check]').length;
-      var checked = document.querySelectorAll('[data-decl-check]:checked').length;
-      var feedback = document.getElementById('decl-feedback-text');
-      var submitBtn = document.getElementById('decl-submit-btn');
-      if (checked === total) {
-        feedback.className = 'declaration-feedback ready';
-        feedback.innerHTML = ICONS['check-circle'] + ' All declarations checked. You may now submit.';
-        submitBtn.setAttribute('aria-disabled', 'false');
-      } else {
-        feedback.className = 'declaration-feedback pending';
-        feedback.textContent = checked + ' of ' + total + ' declarations checked.';
-        submitBtn.setAttribute('aria-disabled', 'true');
-      }
-    });
-  });
-
-  var submitBtn = document.getElementById('decl-submit-btn');
-  if (submitBtn) {
-    submitBtn.addEventListener('click', function (e) {
-      e.preventDefault();
-      var total = document.querySelectorAll('[data-decl-check]').length;
-      var checked = document.querySelectorAll('[data-decl-check]:checked').length;
-      if (checked < total) {
-        var feedback = document.getElementById('decl-feedback-text');
-        if (feedback) {
-          feedback.className = 'declaration-feedback pending';
-          feedback.textContent = checked + ' of ' + total + ' declarations checked. Please tick all boxes before submitting.';
-        }
-        return;
-      }
-      window.open('https://forms.office.com/Pages/ResponsePage.aspx?id=Vh899lFQb0WqKQNhQLPcZdoUSrKAnglKmUU3TRuuYWhUNlBWR05RVENKUzdHSlNDT1NISzNRT0s2Uy4u', '_blank');
-    });
-  }
 }
 
 /* =============================================
@@ -1009,7 +965,8 @@ export function init() {
   loadState();
 
   if (state.view === 'lesson') {
-    if (!state.currentLessonId || !allLessons.find(function (l) { return l.lesson.id === state.currentLessonId; })) {
+    var lessonValid = state.currentLessonId && allLessons.find(function (l) { return l.lesson.id === state.currentLessonId; });
+    if (!lessonValid || isLessonLocked(state.currentLessonId)) {
       state.view = 'hub';
       saveState();
     }
@@ -1046,9 +1003,12 @@ function initTheme() {
   var isDark = saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
   if (isDark) document.body.classList.add('dark');
 
-  document.getElementById('themeToggle').addEventListener('click', function () {
+  var toggle = document.getElementById('themeToggle');
+  toggle.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+  toggle.addEventListener('click', function () {
     document.body.classList.toggle('dark');
     var dark = document.body.classList.contains('dark');
     localStorage.setItem('htbb-theme', dark ? 'dark' : 'light');
+    toggle.setAttribute('aria-pressed', dark ? 'true' : 'false');
   });
 }

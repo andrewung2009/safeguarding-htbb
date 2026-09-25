@@ -7,7 +7,6 @@ export const state = {
   currentBlockIndex: 0,
   quizAnswers: {},
   discussionTexts: {},
-  declarationChecks: {},
 };
 
 export function saveState() {
@@ -30,7 +29,6 @@ export function loadState() {
     state.currentBlockIndex = Number.isInteger(parsed.currentBlockIndex) && parsed.currentBlockIndex >= 0 ? parsed.currentBlockIndex : 0;
     state.quizAnswers = sanitizeQuizAnswers(parsed.quizAnswers);
     state.discussionTexts = sanitizeStringMap(parsed.discussionTexts);
-    state.declarationChecks = sanitizeBoolMap(parsed.declarationChecks);
   } catch (e) {
     console.warn('Failed to load progress, starting fresh:', e);
   }
@@ -56,15 +54,6 @@ function sanitizeStringMap(raw) {
   const clean = {};
   for (const [id, val] of Object.entries(raw)) {
     if (typeof val === 'string') clean[id] = val;
-  }
-  return clean;
-}
-
-function sanitizeBoolMap(raw) {
-  if (!raw || typeof raw !== 'object') return {};
-  const clean = {};
-  for (const [id, val] of Object.entries(raw)) {
-    clean[id] = !!val;
   }
   return clean;
 }
