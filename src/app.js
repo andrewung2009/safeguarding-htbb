@@ -30,6 +30,10 @@ function isInstallDismissed() {
   try { return localStorage.getItem(INSTALL_DISMISS_KEY) === '1'; } catch (e) { return false; }
 }
 
+function isMobileOrTablet() {
+  return window.matchMedia('(pointer: coarse)').matches || /Android|iPad|iPhone|iPod/i.test(navigator.userAgent);
+}
+
 function isModuleLocked(moduleId) {
   var mods = COURSE_DATA.modules;
   if (!mods.length || mods[mods.length - 1].id !== moduleId) return false;
@@ -161,7 +165,7 @@ function renderHub() {
   html += '</div>';
   html += '</div>';
 
-  if (!isStandalone() && !isInstallDismissed()) {
+  if (!isStandalone() && !isInstallDismissed() && isMobileOrTablet()) {
     html += '<div class="install-banner" id="installBanner" role="note">';
     html += '<div class="install-banner-icon" aria-hidden="true"><img src="./icon-192.png" alt=""></div>';
     html += '<div class="install-banner-body">';
