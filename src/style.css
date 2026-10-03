@@ -153,6 +153,30 @@ body.dark .hub-stat-num { color:var(--teal-400); }
 .hub-complete-cta { margin-top:var(--sp-4); }
 body.dark .hub-complete-card { border-color:var(--emerald-800); }
 
+/* Install-as-app banner */
+.install-banner {
+  display:flex; align-items:flex-start; gap:14px; position:relative;
+  background:var(--surface); border:1px solid var(--teal-200); border-radius:var(--radius-2xl);
+  padding:16px 52px 16px 16px; margin-bottom:var(--sp-6); box-shadow:var(--shadow-xs);
+}
+.install-banner-icon { width:48px; height:48px; border-radius:var(--radius-lg); overflow:hidden; flex-shrink:0; border:1px solid var(--border); background:var(--surface); }
+.install-banner-icon img { width:100%; height:100%; object-fit:contain; display:block; }
+.install-banner-body { flex:1; min-width:0; }
+.install-banner-body h2 { font-size:15px; font-weight:700; color:var(--text); margin-bottom:2px; }
+.install-banner-body p { font-size:13.5px; color:var(--text-muted); }
+.install-banner-steps { margin-top:8px; padding:10px 12px; background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-lg); }
+.install-banner-steps p { font-size:13px; color:var(--text-muted); margin:0; }
+.install-banner-btn { flex-shrink:0; align-self:center; }
+.install-banner-dismiss {
+  position:absolute; top:10px; right:10px; width:30px; height:30px;
+  display:flex; align-items:center; justify-content:center;
+  border:none; background:transparent; border-radius:var(--radius-md);
+  color:var(--text-faint); cursor:pointer; transition:all 0.15s ease;
+}
+.install-banner-dismiss:hover { background:var(--surface-2); color:var(--text); }
+.install-banner-dismiss svg { width:15px; height:15px; }
+body.dark .install-banner { border-color:var(--teal-800); }
+
 .hub-modules { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:var(--sp-4); padding:0 0 var(--sp-8); }
 
 .hub-module-card {
@@ -575,6 +599,8 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible) { outline:none; }
    ============================================= */
 @media (max-width: 560px) {
   .header-stat-videos { display:none; }
+  .install-banner { flex-wrap:wrap; padding:14px 48px 14px 14px; }
+  .install-banner-btn { order:3; width:100%; justify-content:center; align-self:stretch; }
 }
 
 /* =============================================

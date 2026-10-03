@@ -43,7 +43,7 @@ Deploys automatically on push to `main` via GitHub Actions (`peaceiris/actions-g
 main.js → app.js → icons.js, utils.js, state.js, course-data.js
 ```
 
-**State:** `localStorage` key `htbb-safeguarding-state` (schema v2). Shape: `{ v, view, currentLessonId, currentBlockIndex, quizAnswers, discussionTexts }`. View is `'hub'` or `'lesson'`. `currentBlockIndex` tracks progressive block disclosure within a lesson. Theme preference stored separately under `htbb-theme`.
+**State:** `localStorage` key `htbb-safeguarding-state` (schema v2). Shape: `{ v, view, currentLessonId, currentBlockIndex, quizAnswers, discussionTexts }`. View is `'hub'` or `'lesson'`. `currentBlockIndex` tracks progressive block disclosure within a lesson. Theme preference stored separately under `htbb-theme`; install-banner dismissal under `htbb-install-dismissed`.
 
 **Content block types:** `video`, `quiz`, `discussion`, `scenario`, `text`, `principles`, `officers`, `links`, `warning`, `safer-recruitment`, `declaration`
 

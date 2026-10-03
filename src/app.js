@@ -15,6 +15,21 @@ var announceTimer = null;
 var DECLARATION_URL = 'https://forms.cloud.microsoft/pages/responsepage.aspx?id=Vh899lFQb0WqKQNhQLPcZdoUSrKAnglKmUU3TRuuYWhUMDlNRlpaWTg4SzJLOFFQNkVYNFBSWTUzWi4u';
 var LOCK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
 
+var INSTALL_DISMISS_KEY = 'htbb-install-dismissed';
+var deferredPrompt = null;
+
+function isStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+}
+
+function isIos() {
+  return /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+function isInstallDismissed() {
+  try { return localStorage.getItem(INSTALL_DISMISS_KEY) === '1'; } catch (e) { return false; }
+}
+
 function isModuleLocked(moduleId) {
   var mods = COURSE_DATA.modules;
   if (!mods.length || mods[mods.length - 1].id !== moduleId) return false;
@@ -146,6 +161,19 @@ function renderHub() {
   html += '</div>';
   html += '</div>';
 
+  if (!isStandalone() && !isInstallDismissed()) {
+    html += '<div class="install-banner" id="installBanner" role="note">';
+    html += '<div class="install-banner-icon" aria-hidden="true"><img src="./icon-192.png" alt=""></div>';
+    html += '<div class="install-banner-body">';
+    html += '<h2>Install on your device</h2>';
+    html += '<p>Add HTBB Training to your home screen \u2014 opens like an app and works offline.</p>';
+    html += '<div class="install-banner-steps" id="installBannerSteps" hidden></div>';
+    html += '</div>';
+    html += '<button type="button" class="btn btn-primary btn-sm install-banner-btn" id="installBannerBtn">Install app</button>';
+    html += '<button type="button" class="install-banner-dismiss" id="installBannerDismiss" aria-label="Dismiss install prompt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
+    html += '</div>';
+  }
+
   if (allDone) {
     html += '<div class="hub-complete-card">';
     html += '<div class="hub-complete-icon">' + ICONS['check-circle'] + '</div>';
@@ -228,6 +256,41 @@ function renderHub() {
   if (resumeBtn) {
     resumeBtn.addEventListener('click', function () {
       enterLesson(state.currentLessonId);
+    });
+  }
+
+  var installDismiss = document.getElementById('installBannerDismiss');
+  if (installDismiss) {
+    installDismiss.addEventListener('click', function () {
+      try { localStorage.setItem(INSTALL_DISMISS_KEY, '1'); } catch (e) {}
+      var banner = document.getElementById('installBanner');
+      if (banner) banner.remove();
+    });
+  }
+
+  var installBtn = document.getElementById('installBannerBtn');
+  if (installBtn) {
+    installBtn.addEventListener('click', function () {
+      if (deferredPrompt) {
+        var promptEvent = deferredPrompt;
+        deferredPrompt = null;
+        promptEvent.prompt();
+        promptEvent.userChoice.then(function (choice) {
+          if (choice.outcome === 'accepted') {
+            var banner = document.getElementById('installBanner');
+            if (banner) banner.remove();
+          }
+        });
+        return;
+      }
+      var steps = document.getElementById('installBannerSteps');
+      if (!steps) return;
+      if (isIos()) {
+        steps.innerHTML = '<p><strong>To install:</strong> tap the <strong>Share</strong> button (square with an up arrow), choose <strong>"Add to Home Screen"</strong>, then tap <strong>Add</strong>.</p>';
+      } else {
+        steps.innerHTML = '<p><strong>To install:</strong> open your browser menu and choose <strong>Install app</strong> or <strong>"Add to Home Screen"</strong>.</p>';
+      }
+      steps.hidden = false;
     });
   }
 }
@@ -993,6 +1056,17 @@ export function init() {
 
   document.getElementById('nextBtn').addEventListener('click', function () {
     advanceBlock();
+  });
+
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    deferredPrompt = e;
+  });
+
+  window.addEventListener('appinstalled', function () {
+    deferredPrompt = null;
+    var banner = document.getElementById('installBanner');
+    if (banner) banner.remove();
   });
 
   initTheme();
