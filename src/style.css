@@ -551,7 +551,8 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible) { outline:none; }
 @media (max-width: 768px) {
   .top-header { padding:0 var(--sp-4); gap:8px; }
   .header-logo-img { height:26px; }
-  .header-course-title { font-size:13px; }
+  .header-title-area { flex-shrink:1; min-width:0; }
+  .header-course-title { font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .header-stats { gap:10px; }
   .content-area { padding:0 var(--sp-4) var(--sp-6); }
   .hub-hero { padding:var(--sp-7) var(--sp-4) var(--sp-6); }
@@ -567,6 +568,13 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible) { outline:none; }
   .discussion-prompt { padding:14px 20px 10px; }
   .discussion-body { padding:0 20px 14px; }
   .discussion-footer { padding:0 20px 16px; }
+}
+
+/* =============================================
+   RESPONSIVE — Small phones
+   ============================================= */
+@media (max-width: 560px) {
+  .header-stat-videos { display:none; }
 }
 
 /* =============================================
